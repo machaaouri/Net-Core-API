@@ -36,12 +36,16 @@ namespace CoreAPI
             services.AddApplicationInsightsTelemetry(_config);
             services.AddDbContext<CampContext>(ServiceLifetime.Scoped);
             services.AddScoped<ICampRepository, CampRepository>();
+            services.AddTransient<CampDbInitializer>();
 
             services.AddMvc();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app,
+            IHostingEnvironment env,
+            ILoggerFactory loggerFactory,
+            CampDbInitializer seeder)
         {
             loggerFactory.AddConsole(_config.GetSection("Logging"));
             loggerFactory.AddDebug();
@@ -51,6 +55,8 @@ namespace CoreAPI
             app.UseApplicationInsightsExceptionTelemetry();
 
             app.UseMvc();
+
+            seeder.Seed().Wait();
         }
     }
 }
