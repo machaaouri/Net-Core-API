@@ -25,7 +25,7 @@ namespace CoreAPI.Controllers
             return Ok(camps);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id}",Name ="ModelGet")]
         public IActionResult Get(int id, bool includeSpeakers =false)
         {
 
@@ -41,6 +41,25 @@ namespace CoreAPI.Controllers
 
             }
             catch{ }
+
+            return BadRequest();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody]Camp model)
+        {
+            try
+            {
+                _repo.Add(model);
+                if(await _repo.SaveAllAsync())
+                {
+                    var newUri = Url.Link("ModelGet",new { id = model.Id });
+                    return Created(newUri, model);
+                }
+            }
+            catch(Exception e) {
+                Console.WriteLine(e.Message);
+            }
 
             return BadRequest();
         }
