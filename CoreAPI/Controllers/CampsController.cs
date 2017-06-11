@@ -82,7 +82,7 @@ namespace CoreAPI.Controllers
             {
 
                 var oldCamp = _repo.GetCamp(id);
-                if (oldCamp == null) return NotFound($"Could not find a camp with an id of {id}");
+                if (oldCamp == null) return NotFound($"Could not find a camp with id of {id}");
 
                 //Map model to the oldcamp
                 oldCamp.Name = model.Name ?? oldCamp.Name;
@@ -99,10 +99,31 @@ namespace CoreAPI.Controllers
             catch (Exception ex)
             {
 
-                _logger.LogError($"Threw exception while saving Camp: {ex}");
+                _logger.LogError($"Threw exception while updating Camp: {ex}");
             }
 
-            return BadRequest();
+            return BadRequest("Couldn't ipdate Camp");
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                var oldCamp = _repo.GetCamp(id);
+                if (oldCamp == null) return NotFound($"Could not find Camp with id of {id}");
+
+                _repo.Delete(oldCamp);
+                if (await _repo.SaveAllAsync())
+                {
+                    return Ok();
+                }
+            }
+            catch (Exception)
+            {
+            }
+
+            return BadRequest("Could not delete Camp");
         }
     }
 }
