@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MyCodeCamp.Data;
 
 namespace CoreAPI
 {
@@ -36,6 +37,8 @@ namespace CoreAPI
         {
             // Add framework services.
             services.AddSingleton(_config);
+            services.AddDbContext<CampContext>(ServiceLifetime.Scoped);
+            services.AddScoped<ICampRepository, CampRepository>();
 
             services.AddMvc();
         }
