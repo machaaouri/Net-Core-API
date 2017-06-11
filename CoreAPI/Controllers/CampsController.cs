@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using MyCodeCamp.Data;
 using MyCodeCamp.Data.Entities;
 using System;
@@ -12,9 +13,12 @@ namespace CoreAPI.Controllers
     public class CampsController : Controller
     {
         private ICampRepository _repo;
-        public CampsController(ICampRepository repo)
+        private ILogger<CampsController> _logger;
+
+        public CampsController(ICampRepository repo, ILogger<CampsController> logger)
         {
             _repo = repo; // this is injected by the ServiceCollection
+            _logger = logger;
         }
 
 
@@ -50,15 +54,52 @@ namespace CoreAPI.Controllers
         {
             try
             {
+                _logger.LogInformation("Creating a new Code Camp");
+
                 _repo.Add(model);
                 if(await _repo.SaveAllAsync())
                 {
                     var newUri = Url.Link("ModelGet",new { id = model.Id });
                     return Created(newUri, model);
                 }
+                else
+                {
+                    _logger.LogWarning("Could not save Camp to the database");
+                }
             }
-            catch(Exception e) {
-                Console.WriteLine(e.Message);
+            catch(Exception ex) {
+
+                _logger.LogError($"Threw exception while saving Camp: {ex}");
+            }
+
+            return BadRequest();
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Put(int id,[FromBody]Camp model)
+        {
+            try
+            {
+
+                var oldCamp = _repo.GetCamp(id);
+                if (oldCamp == null) return NotFound($"Could not find a camp with an id of {id}");
+
+                //Map model to the oldcamp
+                oldCamp.Name = model.Name ?? oldCamp.Name;
+                oldCamp.Description = model.Description ?? oldCamp.Description;
+                oldCamp.Location = model.Location ?? oldCamp.Location;
+                oldCamp.Length = model.Length > 0 ? model.Length : oldCamp.Length;
+                oldCamp.EventDate = model.EventDate != DateTime.MinValue ? model.EventDate : oldCamp.EventDate;
+
+                if(await _repo.SaveAllAsync())
+                {
+                    return Ok(oldCamp);
+                }                
+            }
+            catch (Exception ex)
+            {
+
+                _logger.LogError($"Threw exception while saving Camp: {ex}");
             }
 
             return BadRequest();
